@@ -57,7 +57,7 @@ log('');
     showExplanation();
 
     // Check that required CLI commands are installed
-    const requiredCmds = ['git', 'node', 'sfdx', 'heroku'];
+    const requiredCmds = ['git', 'node', 'sf', 'heroku'];
     log(
         chalk.bold(
             `*** Checking for required commands: ${requiredCmds.join(', ')}`
@@ -217,20 +217,25 @@ function sf_org_setup(..._$args) {
     // Use execFileSync because shelljs does not handle either the  progress
     // bar or errors correctly running this command.
     log('*** Pushing source to scratch org');
-    execFileSync('sfdx', ['force:source:push'], { stdio: 'inherit' });
+    sh.exec('sf force:source:push');
+    //execFileSync('sf', ['force:source:push'], { stdio: 'inherit' });
 
     log('*** Assigning permission sets');
-    sh.exec('sf org assign permset -n ecars,Walkthroughs');
+    sh.exec('sf force:user:permset:assign -n ecars -n Walkthroughs');
+    //sh.exec('sf org assign permset -n ecars,Walkthroughs');
 
     log('*** Loading sample data');
-    sh.exec('sf data tree import -p ./data/data-plan.json');
+    sh.exec('sf force:data:tree:import -p ./data/data-plan.json');
+    //sh.exec('sf data tree import -p ./data/data-plan.json');
 
     log('*** Generating user password');
-    sh.exec('sf org generate password');
+    sh.exec('sf force:user:password:generate');
+    //sh.exec('sf org generate password');
 
-    log('*** Fetching user data');
+    log('*** Fetching user data'); 
     const userData = JSON.parse(
-        sh.exec('sf org display user --json', { silent: true })
+        sh.exec('sf force:org:display --json', { silent: true })
+        //sh.exec('sf org display user --json', { silent: true })
     );
     sh.env.SF_USERNAME = userData.result.username;
     sh.env.SF_PASSWORD = userData.result.password;
@@ -355,7 +360,7 @@ function realtime_setup(..._$args) {
     log('*** Provisioning Database');
     execFileSync('heroku', [
         'run',
-        "'cd packages/ecars-db && npx sequelize db:migrate'",
+        'cd packages/ecars-db && npx sequelize db:migrate',
         '-a',
         sh.env.HEROKU_REALTIME_APP_NAME
     ]);
